@@ -1048,30 +1048,24 @@ class QueryGenerator {
 
     switch (this.dialect) {
       case 'mysql':
-      case 'mariadb':
-      case 'sqlite':
         /**
-         * Non digit sub paths need to be quoted as ECMAScript identifiers
+         * Sub paths need to be quoted as ECMAScript identifiers
          * https://bugs.mysql.com/bug.php?id=81896
          */
-        if (this.dialect === 'mysql') {
-          paths = paths.map(subPath => {
-            return /\D/.test(subPath)
-              ? Utils.addTicks(subPath, '"')
-              : subPath;
-          });
-        }
+        paths = paths.map(subPath => Utils.addTicks(subPath, '"'));
+        pathStr = this.escape(['$'].concat(paths).join('.'));
+        return `(${quotedColumn}->>${pathStr})`;
 
+      case 'mariadb':
+        pathStr = this.escape(['$'].concat(paths).join('.'));
+        return `json_unquote(json_extract(${quotedColumn},${pathStr}))`;
+
+      case 'sqlite':
         pathStr = this.escape(['$']
           .concat(paths)
           .join('.')
-          .replace(/\.(\d+)(?:(?=\.)|$)/g, (__, digit) => `[${digit}]`));
-
-        if (this.dialect === 'sqlite') {
-          return `json_extract(${quotedColumn},${pathStr})`;
-        }
-
-        return `json_unquote(json_extract(${quotedColumn},${pathStr}))`;
+          .replace(/\.(\d+)(?:(?=\.)|$)/g, (_, digit) => `[${digit}]`));
+        return `json_extract(${quotedColumn}, ${pathStr})`;
 
       case 'postgres':
         pathStr = this.escape(`{${paths.join(',')}}`);
