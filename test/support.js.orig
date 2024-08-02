@@ -240,7 +240,7 @@ const Support = {
     if (query instanceof Error) {
       expect(query.message).to.equal(expectation.message);
     } else {
-      expect(Support.minifySql(query.query || query)).to.equal(Support.minifySql(expectation));
+      expect(query.query || query).to.equal(expectation);
     }
 
     if (assertions.bind) {
@@ -266,12 +266,8 @@ const Support = {
   minifySql(sql) {
     // replace all consecutive whitespaces with a single plain space character
     return sql.replace(/\s+/g, ' ')
-      // remove space before comma
+      // remove space before coma
       .replace(/ ,/g, ',')
-      // remove space before )
-      .replace(/ \)/g, ')')
-      // replace space after (
-      .replace(/\( /g, '(')
       // remove whitespace at start & end
       .trim();
   }
